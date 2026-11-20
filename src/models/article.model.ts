@@ -31,14 +31,14 @@ const articleSchema = new Schema(
     // Full article content
     content: {
       type: String,
-      required: [true, "Article content is required"],
+      default: null,
       trim: true
     },
 
     // Article cover image
     coverImage: {
       type: String,
-      required: [true, "Cover image is required"],
+      default: null,
       trim: true,
       match: [
         /^https?:\/\/.+/i,
@@ -50,7 +50,7 @@ const articleSchema = new Schema(
     author: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Article author is required"]
+      default: null,
     },
 
     // Category collection
@@ -96,7 +96,31 @@ const articleSchema = new Schema(
     publishedAt: {
       type: Date,
       default: null
-    }
+    },
+    provider: {
+      type: String,
+      enum: ["gnews"],
+      default: null,
+    },
+    providerArticleId: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    articleUrl: {
+      type: String,
+      default: null,
+      trim: true,
+      match: [
+     /^https?:\/\/.+/i,
+     "Article URL must be a valid HTTP or HTTPS URL",
+      ],
+   },
+   isExternal: {
+     type: Boolean,
+     default: false,
+    },
+
   },
   {
     timestamps: true
@@ -104,7 +128,8 @@ const articleSchema = new Schema(
 );
 
 // Create a Index for a documents
-articleSchema.index({ slug: 1 }, { unique: true });
+
+
 // News feed: latest published articles
 articleSchema.index({
   status: 1,
@@ -127,6 +152,27 @@ articleSchema.index({
   description: "text",
   content: "text"
 });
+// Prevent importing the same provider article twice.
+articleSchema.index(
+  { provider: 1, providerArticleId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      provider: { $type: "string" },
+      providerArticleId: { $type: "string" },
+    },
+  }
+);
+// Prevent duplicate external articles when provider ID is unavailable.
+articleSchema.index(
+  { articleUrl: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      articleUrl: { $type: "string" },
+    },
+  }
+);
 
 export type Article = InferSchemaType<typeof articleSchema>
 const ArticleModel = mongoose.model("Article", articleSchema);
