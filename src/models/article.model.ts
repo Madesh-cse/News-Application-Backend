@@ -76,6 +76,15 @@ const articleSchema = new Schema(
       },
       default: "draft"
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
 
     // Article search keywords
     tags: {
