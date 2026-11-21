@@ -1,7 +1,8 @@
 import express from "express"
 import cors from "cors"
 
-import { notfound, errorHandlder } from "./middlewares/error.middleware.js"
+import { errorMiddleware } from "./middlewares/error.middleware.js";
+import articleRoutes from "../src/routes/article.routes.js"
 
 const  app = express()
 
@@ -10,6 +11,7 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 
+app.use("/api/v1/articles", articleRoutes);
 
 // create a Health check endpoint
 app.use("/api/health", (req, res)=>{
@@ -21,8 +23,7 @@ app.use("/api/health", (req, res)=>{
 });
 
 // Register after all application routes
-app.use(notfound);
-app.use(errorHandlder);
+app.use(errorMiddleware);
 
 
 export default app;
