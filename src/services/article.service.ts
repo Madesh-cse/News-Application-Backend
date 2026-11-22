@@ -19,6 +19,22 @@ interface CreateArticleInput{
   status?: "draft" | "published" | "archived";
 }
 
+// Escape special regex characters to prevent unintended patterns
+const escapeRegex = (value: string): string =>{
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+interface ArticleDiscoveryFilters{
+    category?: string,
+    source: string,
+    q?: string,
+    from?: string;
+    to?: string;
+    sort?: "newest" | "oldest" | "popular" | "leastPopular";
+    page: number;
+    limit: number;
+}
+
 class ArticleService{
     async createArticle(data:CreateArticleInput){
         const { title,description,content,coverImage,category,source,tags,status,} = data;
@@ -331,6 +347,157 @@ class ArticleService{
         }
 
         return deletedArticle;
+    }
+
+    // search article by title and description
+    async searchArticles(query: string){
+        const searchTerm = escapeRegex(query.trim());
+        return ArticleModel.find({
+            status: "published",
+            isDeleted: { $ne: true},
+            $or:[
+                {
+                    title:{
+                        $regex: searchTerm,
+                        $options: "i"
+                    },
+                    description:{
+                        $regex: searchTerm,
+                        $options: "i"
+                    },
+                },
+            ],
+        })
+        .populate("category", "name slug")
+        .populate("source", "name websiteUrl")
+        .sort({ publishedAt: -1 })
+        .limit(20);
+    }
+
+    // Filter services
+    async getArticlesByFilters(filters: ArticleDiscoveryFilters){
+        const { category, source, q, from , to, sort, page, limit} = filters;
+        // Base query: published and non-deleted articles
+        const query: Record<string, any> = {
+            status: "published",
+            isDeleted: { $ne: true },
+        }
+        // Validate and category filter
+        if(category){
+            if(!mongoose.isValidObjectId(category)){
+                throw new ApiError(400, "Invalid category ID");
+            }
+            const categoryExists = await CategoryModel.exists({
+                _id: category,
+                isActive: true
+            });
+            if(!categoryExists){
+                throw new ApiError(404, "Category not found or inactive");
+            }
+            query.category = category;
+        }
+        // Validate and apply source filter
+        if(source){
+            if (!mongoose.isValidObjectId(source)) {
+                throw new ApiError(400, "Invalid source ID");
+            }
+            const sourceExists = await SourceModel.exists({
+                _id: source,
+                isActive: true
+            })
+            if(!sourceExists){
+                 throw new ApiError(404, "Source not found or inactive");
+            }
+            query.source = source;
+        }
+
+        // Apply keyword search to title and description
+        if(q){
+            const searchTerm = escapeRegex(q.trim());
+                query.$or = [
+                {
+                    title: {
+                        $regex: searchTerm,
+                        $options: "i",
+                    },
+                },
+                {
+                    description: {
+                        $regex: searchTerm,
+                        $options: "i",
+                    },
+                },
+            ];
+        }
+        if(from || to){
+            const publishedAtFilter: Record<string, Date> = {};
+            if(from){
+                publishedAtFilter.$gte = new Date(
+                    `${from}T00:00:00.000Z`
+                );
+            }
+            if(to){
+                const endDate = new Date(`${to}T00:00:00.000Z`);
+                endDate.setUTCDate(endDate.getUTCDate() + 1);
+                publishedAtFilter.$lt = endDate;
+            }
+            query.publishedAt = publishedAtFilter;
+        }
+        //pagination
+        const skip = ( page - 1) * limit
+        // Apply sorting
+        const sortOptions: Record<string, 1 | -1> = {
+            newest: -1,
+            oldest: 1,
+            popular: -1,
+            leastPopular: 1,
+        };
+
+        const sortField = sort === "popular" || sort === "leastPopular" ? "viewCount" : "publishedAt";
+        const sortOrder = sortOptions[sort ?? "newest"];
+        const[articles, totalArticles] = await Promise.all([
+            ArticleModel.find(query)
+              .populate("category", "name slug")
+              .populate("source", "name websiteUrl")
+              .sort({[sortField]: sortOrder, _id: -1 })
+              .limit(20),
+            ArticleModel.countDocuments(query)
+        ])
+        const totalPages = Math.ceil(totalArticles / limit);
+        return{
+            articles,
+            pagination:{
+                totalArticles,
+                currentPage: page,
+                limit,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1,
+            }
+        }
+    }
+
+    // Trending Articles
+    async getTrendingArticles() {
+        return ArticleModel.find({
+            status:"published",
+            isDeleted: { $ne: true}
+        })
+        .populate("category", "name slug")
+        .populate("source", "name websiteUrl")
+        .sort({ viewCount: -1,publishedAt: -1, }).limit(10)
+    }
+
+    // feature Articles
+    async getFeaturedArticles(){
+        return ArticleModel.find({
+            status: "published",
+            isDeleted: { $ne: true },
+            isFeatured: true,
+        })
+        .populate("category", "name slug")
+        .populate("source", "name websiteUrl")
+        .sort({publishedAt: -1,}).limit(10);
     }
 }
 
