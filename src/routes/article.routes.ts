@@ -3,6 +3,8 @@ import { createArticle,getArticle,getLatestArticles,getArticlesByCategory, getAr
 import {createArticleSchema,updateArticleSchema,searchArticleQuerySchema,articleFilterQuerySchema  } from "../validators/article.validator.js";
 import {articleIdParamsSchema, categoryIdParamsSchema,articleSlugParamsSchema,} from "../validators/common.validator.js";
 import {validateBody,validateParams,validateQuery} from "../middlewares/validate.middleware.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/authorize.middleware.js";
 
 
 const router = Router();
@@ -18,9 +20,9 @@ router.get("/slug/:slug", validateParams(articleSlugParamsSchema), getArticleByS
 router.get("/:id", validateParams(articleIdParamsSchema), getArticleById);
 
 // Create and update, delete routes
-router.post("/",validateBody(createArticleSchema), createArticle);
-router.patch("/:id", validateParams(articleIdParamsSchema),validateBody(updateArticleSchema),updateArticle);
-router.delete("/:id", validateParams(articleIdParamsSchema), deleteArticle);
+router.post("/", authenticate, authorize("admin", "editor"),validateBody(createArticleSchema), createArticle);
+router.patch("/:id", authenticate, authorize("admin", "editor"), validateParams(articleIdParamsSchema),validateBody(updateArticleSchema),updateArticle);
+router.delete("/:id",  authenticate,authorize("admin", "editor"), validateParams(articleIdParamsSchema), deleteArticle);
 
 export default router;
 

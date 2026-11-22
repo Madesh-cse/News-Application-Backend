@@ -1,5 +1,6 @@
 
 import mongoose, { Schema, InferSchemaType } from "mongoose";
+import bycrypt from "bcrypt"
 
 import {  USER_ROLES,USER_STATUSES } from "../types/user.types.js";
 
@@ -57,6 +58,16 @@ const userSchema = new Schema(
     timestamps: true
   }
 );
+
+// password hasing middleware
+userSchema.pre("save", async function(){
+  if(!this.isModified("passwordHash")){
+    return;
+  }
+  this.passwordHash = await bycrypt.hash(this.passwordHash, 12)
+})
+
+
 export type User = InferSchemaType<typeof userSchema>;
 const UserModel = mongoose.model("User", userSchema);
 
