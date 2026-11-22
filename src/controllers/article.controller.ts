@@ -17,11 +17,23 @@ export const createArticle = async(req:Request, res:Response, next:NextFunction)
 
 export const getArticle = async(req:Request, res:Response, next:NextFunction)=>{
     try{
-        const articles = await articleService.getallArticle();
+        const { category, source, q, from, to, sort, page, limit} = res.locals.validatedQuery;;
+        const articles = await articleService.getArticlesByFilters({
+            category: category as string | undefined,
+            source: source as string,
+            q: q as string | undefined,
+            from: from as string | undefined,
+            to: to as string | undefined,
+            sort: sort as "newest" | "oldest" | "popular" | "leastPopular" | undefined,
+            page: page as number,
+            limit: limit as number,
+        });
+        const result = await articleService.getArticlesByFilters({category,source,q,from,to,sort,page,limit,})
         return res.status(200).json({
             success: true,
-            count: articles.length,
-            data: articles,
+            count: result.articles.length,
+            data: result.articles,
+            pagination: result.pagination,
         })
     }
     catch(err:any){
@@ -110,3 +122,49 @@ export const deleteArticle = async (req: Request,res: Response,next: NextFunctio
     next(error);
   }
 };
+
+// search controller
+export const searchArticles = async (req: Request,res: Response,next: NextFunction) => {
+    try{
+        const query = req.query.q as string;
+        const articles = await articleService.searchArticles(query);
+        return res.status(200).json({
+            success: true,
+            count: articles.length,
+            data: articles,
+        })
+    }
+    catch(err:any){
+        next(err)
+    }
+}
+
+// Trending Articles
+export const getTrendingArticles = async (req: Request,res: Response,next: NextFunction) =>{
+    try{
+        const articles = await articleService.getTrendingArticles();
+        return res.status(200).json({
+            success: true,
+            count: articles.length,
+            data: articles,
+        })
+    }
+    catch(err:any){
+        next(err)
+    }
+}
+
+// Featured Articles
+export const getFeaturedArticles = async (req: Request,res: Response,next: NextFunction) =>{
+    try{
+        const articles = await articleService.getFeaturedArticles();
+         return res.status(200).json({
+            success: true,
+            count: articles.length,
+            data: articles,
+         })
+    }
+    catch(err:any){
+        next(err)
+    }
+}

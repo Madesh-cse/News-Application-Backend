@@ -100,6 +100,10 @@ const articleSchema = new Schema(
       default: 0,
       min: [0, "View count cannot be negative"]
     },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    } ,
 
     // Publication date
     publishedAt: {

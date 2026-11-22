@@ -43,3 +43,26 @@ export const validateParams = (schema: ZodType): RequestHandler => {
     next();
   };
 };
+
+
+export const validateQuery = (schema: ZodType): RequestHandler => {
+  return (req, res, next) => {
+    const result = schema.safeParse(req.query);
+
+    if (!result.success) {
+      return next(
+        new ApiError(
+          422,
+          "Query validation failed",
+          result.error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          }))
+        )
+      );
+    }
+
+    res.locals.validatedQuery = result.data;
+    next();
+  };
+};

@@ -1,24 +1,26 @@
-import "../src/dns.js"
-import dotenv from "dotenv"
+import "dotenv/config";
+import "./dns.js";
 
-dotenv.config()
-import app from "./app.js"
-import { connectDb } from "./config/database.js"
+import app from "./app.js";
+import { connectDb } from "./config/database.js";
 
 const port = process.env.PORT || 5000;
 
-//  create  a start server function
- const startSever = async(): Promise<void> =>{
-    try{
-        await connectDb();
-        app.listen(port, ()=>{
-            console.log(`Server running on port ${port}`);
-        })
-    }
-    catch(error:any){
-        console.error("Server startup failed:", error);
-        process.exit(1);
-    }
-}
+const startServer = async (): Promise<void> => {
+  try {
+    await connectDb();
 
- startSever()
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+      console.log(
+        "JWT secret loaded:",
+        Boolean(process.env.JWT_ACCESS_SECRET)
+      );
+    });
+  } catch (error: unknown) {
+    console.error("Server startup failed:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
