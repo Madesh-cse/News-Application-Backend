@@ -123,7 +123,7 @@ class ArticleService{
     }
     // Get by Slug
     async getBySlug(slug: string){
-        const article = await ArticleModel.findOne({slug,isDeleted: { $ne: true },})
+        const article = await ArticleModel.findOne({slug, status:"published",isDeleted: { $ne: true },})
          .populate("category", "name slug")
          .populate("source", "name websiteUrl");
         if(!article){

@@ -13,7 +13,7 @@ export const generateAcessToken = (userId: string, role: AccessTokenPayload["rol
         algorithm: "HS256"
     };
     return jwt.sign(
-        { role},
+        { role, tokenVersion},
         jwtConfig.accessSecret,
         options
     )
