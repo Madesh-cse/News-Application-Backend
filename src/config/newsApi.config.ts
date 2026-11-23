@@ -1,4 +1,4 @@
-import dotnev from "dotenv/config"
+import "dotenv/config";
 import axios from "axios"
 
 const apikey = process.env.GNEWS_API_KEY;
