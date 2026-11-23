@@ -46,7 +46,7 @@ class UserService{
           throw new ApiError(401, "Invalid email or password");
         }
        const safeUser =  toSafeUser(user);
-       const accessToken = generateAcessToken(user._id.toString(), user.role);
+       const accessToken = generateAcessToken(user._id.toString(), user.role, user.tokenVersion);
         return {
             user: safeUser,
             accessToken
@@ -102,6 +102,22 @@ class UserService{
         }
         user.passwordHash = input.newPassword;
         await user.save();
+        return true;
+    }
+
+    async logoutUser(userId: string){
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+        {
+          $inc: { tokenVersion: 1 },
+        },
+        {
+          new: true,
+        }
+        ).select("_id");
+        if(!user){
+             throw new ApiError(404, "User not found");
+        }
         return true;
     }
 }
