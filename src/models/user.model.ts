@@ -52,7 +52,11 @@ const userSchema = new Schema(
       type: String,
       enum: USER_STATUSES,
       default: "active"
-    }
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true

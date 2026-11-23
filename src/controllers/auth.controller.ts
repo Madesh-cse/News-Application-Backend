@@ -84,3 +84,21 @@ export const changePassword = async(req:Request, res:Response, next:NextFunction
         next(err)
     }
 }
+
+// Logout controller
+export const logoutUser = async(req:Request, res:Response, next:NextFunction)=>{
+    try{
+        const userId = req.user?.sub;
+        if(!userId){
+            throw new ApiError(401, "Authentication required");
+        }
+        await userService.logoutUser(userId);
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful. Access tokens have been revoked.",
+        })
+    }
+    catch(err:any){
+        next(err)
+    }
+}
