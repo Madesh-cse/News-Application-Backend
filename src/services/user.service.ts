@@ -101,6 +101,7 @@ class UserService{
             throw new ApiError(401, "Current password is incorrect");
         }
         user.passwordHash = input.newPassword;
+        user.tokenVersion += 1;
         await user.save();
         return true;
     }
