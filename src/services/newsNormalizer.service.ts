@@ -39,11 +39,18 @@ export const normalizeGNewsArticle = (article: GNewsArticle): NormalizedNewsArti
         return null;
     }
     const image = cleanText(article.image);
+    // Clean description and content
+    const originalDescription = cleanText(article.description);
+    const content = cleanText(article.content);
+    const description = originalDescription || (content ? content.slice(0, 500) : null);
+    if (!description) {
+      return null;
+    }
     return {
         provider: "gnews",
         providerArticleId: cleanText(article.id),
         title,
-        description: cleanText(article.description),
+        description,
         content: cleanText(article.content),
         articleUrl,
         coverImage: isValidHttpUrl(image) ? image : null,
