@@ -460,7 +460,8 @@ class ArticleService{
               .populate("category", "name slug")
               .populate("source", "name websiteUrl")
               .sort({[sortField]: sortOrder, _id: -1 })
-              .limit(20),
+              .skip(skip)
+              .limit(limit),
             ArticleModel.countDocuments(query)
         ])
         const totalPages = Math.ceil(totalArticles / limit);
