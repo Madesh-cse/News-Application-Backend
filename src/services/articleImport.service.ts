@@ -3,31 +3,33 @@ import ArticleModel from "../models/article.model.js";
 import CategoryModel from "../models/category.model.js";
 import SourceModel from "../models/source.model.js";
 
-import type {NormalizedNewsArticle,} from "../types/normalizedArticle.types.js";
+import type { NormalizedNewsArticle } from "../types/normalizedArticle.types.js";
 
 import { mapGNewsCategory } from "../utils/newsCategoryMapper.js";
 import type { GNewsCategory } from "../types/newsApi.types.js";
 
 class ArticleImportService {
-  // Find or create publisher
-  private async findOrCreateSource(
-    article: NormalizedNewsArticle
-  ) {
+  private async findOrCreateSource(article: NormalizedNewsArticle) {
     const { source } = article;
+
     let existingSource = null;
+
     if (source.providerId) {
       existingSource = await SourceModel.findOne({
         providerId: source.providerId,
       });
     }
+
     if (!existingSource) {
       existingSource = await SourceModel.findOne({
         name: source.name,
       });
     }
+
     if (existingSource) {
       return existingSource;
     }
+
     return SourceModel.create({
       name: source.name,
       providerId: source.providerId,
@@ -49,13 +51,25 @@ class ArticleImportService {
     return slug || "external-news";
   }
 
-  // Find category and import article
+  // Generate a stable unique slug for each provider article
+  private generateUniqueSlug(article: NormalizedNewsArticle): string {
+    const baseSlug = this.generateSlug(article.title);
+
+    const uniqueIdentifier =
+      article.providerArticleId ||
+      Buffer.from(article.articleUrl).toString("base64url").slice(0, 12);
+
+    return `${baseSlug}-${uniqueIdentifier}`;
+  }
+
   async importArticle(
     article: NormalizedNewsArticle,
     category: GNewsCategory
   ) {
     const source = await this.findOrCreateSource(article);
+
     const categorySlug = mapGNewsCategory(category);
+
     const categoryDocument = await CategoryModel.findOne({
       slug: categorySlug,
       isActive: true,
@@ -73,10 +87,11 @@ class ArticleImportService {
           providerArticleId: article.providerArticleId,
         }
       : {
+          provider: article.provider,
           articleUrl: article.articleUrl,
         };
 
-    const slug = this.generateSlug(article.title);
+    const slug = this.generateUniqueSlug(article);
 
     const importedArticle = await ArticleModel.findOneAndUpdate(
       identityFilter,
@@ -84,7 +99,7 @@ class ArticleImportService {
         $setOnInsert: {
           title: article.title,
           slug,
-          description: article.description ?? "",
+          description: (article.description ?? "").slice(0, 500),
           content: article.content ?? "",
           coverImage: article.coverImage,
           articleUrl: article.articleUrl,
@@ -111,7 +126,6 @@ class ArticleImportService {
     return importedArticle;
   }
 
-  // Import multiple articles
   async importArticles(
     articles: NormalizedNewsArticle[],
     category: GNewsCategory
@@ -119,11 +133,7 @@ class ArticleImportService {
     const results = [];
 
     for (const article of articles) {
-      const imported = await this.importArticle(
-        article,
-        category
-      );
-
+      const imported = await this.importArticle(article, category);
       results.push(imported);
     }
 
