@@ -499,6 +499,36 @@ class ArticleService{
         .populate("source", "name websiteUrl")
         .sort({publishedAt: -1,}).limit(10);
     }
+
+    // Increment article view count service
+    async incrementArticleView(id: string){
+        if(!mongoose.isValidObjectId(id)){
+            throw new ApiError(400, "Invalid article ID")
+        }
+        const article = await ArticleModel.findOneAndUpdate(
+            {
+              _id: id,
+              status: "published",
+              isDeleted: { $ne: true },
+            },
+            {
+                $inc:{
+                    viewCount: 1,
+                },
+            },
+            {
+                returnDocument: "after",
+            }
+        );
+        if(!article){
+            throw new ApiError(404, "Published article not found");
+        }
+
+        return {
+            articleId: article._id,
+            viewCount: article.viewCount,
+        }
+    }
 }
 
 const articleService = new ArticleService();

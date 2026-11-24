@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createArticle,getArticle,getLatestArticles,getArticlesByCategory, getArticleById, getArticleBySlug, updateArticle,deleteArticle,searchArticles,getTrendingArticles,getFeaturedArticles, } from "../controllers/article.controller.js";
+import { createArticle,getArticle,getLatestArticles,getArticlesByCategory, getArticleById, getArticleBySlug, updateArticle,deleteArticle,searchArticles,getTrendingArticles,getFeaturedArticles,incrementArticleView, } from "../controllers/article.controller.js";
 import {createArticleSchema,updateArticleSchema,searchArticleQuerySchema,articleFilterQuerySchema  } from "../validators/article.validator.js";
 import {articleIdParamsSchema, categoryIdParamsSchema,articleSlugParamsSchema,} from "../validators/common.validator.js";
 import {validateBody,validateParams,validateQuery} from "../middlewares/validate.middleware.js";
@@ -17,6 +17,7 @@ router.get("/trending", getTrendingArticles);
 router.get("/featured", getFeaturedArticles);
 router.get("/category/:categoryId",validateParams(categoryIdParamsSchema), getArticlesByCategory);
 router.get("/slug/:slug", validateParams(articleSlugParamsSchema), getArticleBySlug);
+router.post("/:id/view",validateParams(articleIdParamsSchema),incrementArticleView);
 router.get("/:id", validateParams(articleIdParamsSchema), getArticleById);
 
 // Create and update, delete routes

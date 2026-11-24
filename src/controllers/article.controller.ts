@@ -168,3 +168,19 @@ export const getFeaturedArticles = async (req: Request,res: Response,next: NextF
         next(err)
     }
 }
+
+ // Increment the articleView
+    export const incrementArticleView = async (req: Request,res: Response,next: NextFunction) =>{
+        try{
+            const id = typeof req.params.id === "string" ? req.params.id : req.params.id[0];
+            const result  = await articleService.incrementArticleView(id);
+            return res.status(200).json({
+                success: true,
+                message: "Article view recorded successfully",
+                data: result,
+            })
+        }
+        catch(err:any){
+            next(err)
+        }
+    }
