@@ -5,6 +5,7 @@ import {articleIdParamsSchema, categoryIdParamsSchema,articleSlugParamsSchema,} 
 import {validateBody,validateParams,validateQuery} from "../middlewares/validate.middleware.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.middleware.js";
+import { optionalAuthenticate } from "../middlewares/optional-auth.middleware.js";
 
 
 const router = Router();
@@ -16,7 +17,7 @@ router.get("/latest", getLatestArticles);
 router.get("/trending", getTrendingArticles);
 router.get("/featured", getFeaturedArticles);
 router.get("/category/:categoryId",validateParams(categoryIdParamsSchema), getArticlesByCategory);
-router.get("/slug/:slug", validateParams(articleSlugParamsSchema), getArticleBySlug);
+router.get("/slug/:slug", validateParams(articleSlugParamsSchema), optionalAuthenticate, getArticleBySlug);
 router.post("/:id/view",validateParams(articleIdParamsSchema),incrementArticleView);
 router.get("/:id", validateParams(articleIdParamsSchema), getArticleById);
 

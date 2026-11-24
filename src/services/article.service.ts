@@ -35,6 +35,15 @@ interface ArticleDiscoveryFilters{
     limit: number;
 }
 
+// Guard the content for the Guest
+const getArticlePreview = ( content: string | null | undefined): string  | null =>{
+    if(!content){
+        return null;
+    }
+    const paragraphs = content.split(/\n+/).map((pragraph)=>pragraph.trim()).filter(Boolean)
+    return paragraphs.slice(0, 3).join("\n\n");
+}
+
 class ArticleService{
     async createArticle(data:CreateArticleInput){
         const { title,description,content,coverImage,category,source,tags,status,} = data;
@@ -122,12 +131,15 @@ class ArticleService{
         return article;
     }
     // Get by Slug
-    async getBySlug(slug: string){
+    async getBySlug(slug: string, includeFullContent = false){
         const article = await ArticleModel.findOne({slug, status:"published",isDeleted: { $ne: true },})
          .populate("category", "name slug")
          .populate("source", "name websiteUrl");
         if(!article){
            throw new ApiError(404, "Slug is not found");
+        }
+        if(!includeFullContent){
+            article.content = getArticlePreview(article.content);
         }
         return article;
     }
@@ -136,6 +148,7 @@ class ArticleService{
         return await ArticleModel.find({status: "published",isDeleted: { $ne: true },})
          .populate("category", "name slug")
          .populate("source", "name websiteUrl")
+         .select("-content")
          .sort({ publishedAt: -1})
         .limit(limit);
     }
@@ -158,6 +171,7 @@ class ArticleService{
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
+        .select("-content")
         .sort({ publishedAt: -1 })
     }
 
@@ -370,6 +384,7 @@ class ArticleService{
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
+        .select("-content")
         .sort({ publishedAt: -1 })
         .limit(20);
     }
@@ -459,6 +474,7 @@ class ArticleService{
             ArticleModel.find(query)
               .populate("category", "name slug")
               .populate("source", "name websiteUrl")
+              .select("-content")
               .sort({[sortField]: sortOrder, _id: -1 })
               .skip(skip)
               .limit(limit),
@@ -486,6 +502,7 @@ class ArticleService{
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
+        .select("-content")
         .sort({ viewCount: -1,publishedAt: -1, }).limit(10)
     }
 
@@ -498,6 +515,7 @@ class ArticleService{
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
+        .select("-content")
         .sort({publishedAt: -1,}).limit(10);
     }
 

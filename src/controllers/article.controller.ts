@@ -58,10 +58,15 @@ export const getArticleById = async(req:Request, res:Response, next:NextFunction
 export const getArticleBySlug = async(req:Request, res:Response, next:NextFunction)=>{
     try{
         const slug = typeof req.params.slug === "string" ? req.params.slug : req.params.slug[0];
-        const article = await articleService.getBySlug(slug);
+        const isAunthenticated = Boolean(req.user);
+        const article = await articleService.getBySlug(slug,isAunthenticated);
         return res.status(200).json({
             success: true,
             data: article,
+            access:{
+                authenticated: isAunthenticated,
+                preview: !isAunthenticated,
+            }
         })
     }
     catch(err:any){
