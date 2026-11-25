@@ -17,17 +17,7 @@ export const createArticle = async(req:Request, res:Response, next:NextFunction)
 
 export const getArticle = async(req:Request, res:Response, next:NextFunction)=>{
     try{
-        const { category, source, q, from, to, sort, page, limit} = res.locals.validatedQuery;;
-        const articles = await articleService.getArticlesByFilters({
-            category: category as string | undefined,
-            source: source as string,
-            q: q as string | undefined,
-            from: from as string | undefined,
-            to: to as string | undefined,
-            sort: sort as "newest" | "oldest" | "popular" | "leastPopular" | undefined,
-            page: page as number,
-            limit: limit as number,
-        });
+        const { category, source, q, from, to, sort, page, limit} = res.locals.validatedQuery;
         const result = await articleService.getArticlesByFilters({category,source,q,from,to,sort,page,limit,})
         return res.status(200).json({
             success: true,
@@ -70,7 +60,7 @@ export const getArticleBySlug = async(req:Request, res:Response, next:NextFuncti
         })
     }
     catch(err:any){
-        next(next)
+        next(err)
     }
 }
 

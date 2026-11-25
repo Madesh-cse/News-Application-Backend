@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import bookmarkRoutes from "./routes/bookmark.routes.js";
+import sourceRoutes from "./routes/source.routes.js";
 
 const  app = express()
 
@@ -19,6 +20,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/articles", articleRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/bookmarks", bookmarkRoutes);
+app.use("/api/v1/sources", sourceRoutes);
 app.use("/api/v1/test", testRoutes);
 
 // create a Health check endpoint
