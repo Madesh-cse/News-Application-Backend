@@ -110,6 +110,10 @@ const articleSchema = new Schema(
       type: Date,
       default: null
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
     provider: {
       type: String,
       enum: ["gnews"],
@@ -186,6 +190,11 @@ articleSchema.index(
       articleUrl: { $type: "string" },
     },
   }
+);
+// create a index for expiring
+articleSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0 }
 );
 
 export type Article = InferSchemaType<typeof articleSchema>

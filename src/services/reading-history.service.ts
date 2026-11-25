@@ -50,21 +50,51 @@ export const recordReadingHistory = async (
   return history;
 };
 
+
+const cleanupInvalidReadingHistory = async (userId: string) => {
+  // Get all article IDs referenced by this user's history.
+  const articleIds = await ReadingHistoryModel.distinct("article", {
+    user: userId,
+  });
+
+  if (articleIds.length === 0) return;
+
+  // Find articles that are still available.
+  const validArticleIds = await ArticleModel.find({
+    _id: { $in: articleIds },
+    status: "published",
+    isDeleted: { $ne: true },
+    $or: [
+      { expiresAt: null },
+      { expiresAt: { $exists: false } },
+      { expiresAt: { $gt: new Date() } },
+    ],
+  }).distinct("_id");
+
+  // Remove history entries whose articles are no longer available.
+  await ReadingHistoryModel.deleteMany({
+    user: userId,
+    article: { $nin: validArticleIds },
+  });
+};
+
+
 // Get reading history
+
 export const getReadingHistory = async (
   userId: string,
   page = 1,
-  limit = 10,
+  limit = 10
 ) => {
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const skip = (page - 1) * limit;
+  // Remove history entries for expired or unavailable articles.
+  await cleanupInvalidReadingHistory(userId);
 
-  const filter = {
-    user: userId,
-  };
+  const skip = (page - 1) * limit;
+  const filter = { user: userId };
 
   const [history, totalItems] = await Promise.all([
     ReadingHistoryModel.find(filter)
@@ -76,14 +106,8 @@ export const getReadingHistory = async (
         select:
           "title slug description coverImage category source publishedAt",
         populate: [
-          {
-            path: "category",
-            select: "name slug",
-          },
-          {
-            path: "source",
-            select: "name",
-          },
+          { path: "category", select: "name slug" },
+          { path: "source", select: "name" },
         ],
       })
       .lean(),
@@ -105,6 +129,7 @@ export const getReadingHistory = async (
     },
   };
 };
+
 
 // Remove one article from reading history
 export const removeReadingHistory = async (

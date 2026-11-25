@@ -25,6 +25,15 @@ const escapeRegex = (value: string): string =>{
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const getNotExpiredFilter = () => ({
+  $or: [
+    { expiresAt: null },
+    { expiresAt: { $exists: false } },
+    { expiresAt: { $gt: new Date() } },
+  ],
+});
+
+
 interface ArticleDiscoveryFilters{
     category?: string,
     source: string,
@@ -133,7 +142,7 @@ class ArticleService{
     }
     // Get by Slug
     async getBySlug(slug: string, includeFullContent = false){
-        const article = await ArticleModel.findOne({slug, status:"published",isDeleted: { $ne: true },})
+        const article = await ArticleModel.findOne({slug, status:"published",isDeleted: { $ne: true }, $and: [getNotExpiredFilter()],})
          .populate("category", "name slug")
          .populate("source", "name websiteUrl");
         if(!article){
@@ -146,7 +155,7 @@ class ArticleService{
     }
     // Get the latest article
     async getLatestArticle(limit =  10){
-        return await ArticleModel.find({status: "published",isDeleted: { $ne: true },})
+        return await ArticleModel.find({status: "published",isDeleted: { $ne: true }, $and: [getNotExpiredFilter()],})
          .populate("category", "name slug")
          .populate("source", "name websiteUrl")
          .select("-content")
@@ -168,7 +177,9 @@ class ArticleService{
 
         return ArticleModel.find({
             category: categoryId,
+            status: "published",
             isDeleted: { $ne: true },
+            $and: [getNotExpiredFilter()],
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
@@ -370,6 +381,7 @@ class ArticleService{
         return ArticleModel.find({
             status: "published",
             isDeleted: { $ne: true},
+            $and: [getNotExpiredFilter()],
             $or:[
                 {
                     title:{
@@ -397,6 +409,7 @@ class ArticleService{
     const query: Record<string, any> = {
         status: "published",
         isDeleted: { $ne: true },
+        $and: [getNotExpiredFilter()],
     };
     // Category filter
     if (category) {
@@ -441,6 +454,7 @@ class ArticleService{
             $text: { $search: searchTerm },
             status: "published",
             isDeleted: { $ne: true },
+            $and: [getNotExpiredFilter()],
         }).distinct("_id");
 
         // Search author names
@@ -542,7 +556,8 @@ class ArticleService{
     async getTrendingArticles() {
         return ArticleModel.find({
             status:"published",
-            isDeleted: { $ne: true}
+            isDeleted: { $ne: true},
+            $and: [getNotExpiredFilter()],
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
@@ -556,6 +571,7 @@ class ArticleService{
             status: "published",
             isDeleted: { $ne: true },
             isFeatured: true,
+            $and: [getNotExpiredFilter()],
         })
         .populate("category", "name slug")
         .populate("source", "name websiteUrl")
@@ -573,6 +589,7 @@ class ArticleService{
               _id: id,
               status: "published",
               isDeleted: { $ne: true },
+              $and: [getNotExpiredFilter()],
             },
             {
                 $inc:{
