@@ -163,7 +163,8 @@ articleSchema.index({
 articleSchema.index({
   title: "text",
   description: "text",
-  content: "text"
+  content: "text",
+  tags: "text",
 });
 // Prevent importing the same provider article twice.
 articleSchema.index(
