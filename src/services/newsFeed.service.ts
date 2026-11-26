@@ -45,6 +45,20 @@ class NewsFeedService{
         })
         return this.normalizeResponse(response);
     }
+    // Fetch the regional news from tamilnadu
+    async  getTamilNaduNews(language: "en" | "ta" = "en"): Promise<NormalizedNewsResponse>{
+        const query = language === "ta" ? "தமிழ்நாடு OR சென்னை OR மதுரை OR கோயம்புத்தூர் OR திருச்சி OR சேலம் OR திருநெல்வேலி": '"Tamil Nadu" OR Chennai OR Madurai OR Coimbatore OR Trichy OR Salem OR Tirunelveli';
+        const response = await newsApiService.searchArticles({
+            q: query,
+            country: "in",
+            lang:language,
+            max:10,
+            nullable: "description,content,image",
+            sortby: "publishedAt",
+        })
+
+        return this.normalizeResponse(response)
+    }
 }
 const newsFeedService = new NewsFeedService();
 export default newsFeedService;

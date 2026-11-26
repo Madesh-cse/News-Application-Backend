@@ -84,3 +84,31 @@ export const articleFilterQuerySchema = z.object({
     message: "From date cannot be later than to date",
     path: ["from"],
 })
+
+// Validate Tamil Nadu regional news query parameters
+export const regionalNewsQuerySchema = z.object({
+    topic: z.enum([
+        "politics",
+        "government",
+        "crime",
+        "education",
+        "business",
+        "infrastructure",
+        "other",
+    ]).optional(),
+
+    language: z.enum(["en", "ta"]).optional(),
+
+    sort: z.enum(["latest", "importance"]).default("latest"),
+
+    page: z.coerce.number()
+        .int()
+        .min(1, "Page must be at least 1")
+        .default(1),
+
+    limit: z.coerce.number()
+        .int()
+        .min(1, "Limit must be at least 1")
+        .max(50, "Limit cannot exceed 50")
+        .default(10),
+}).strict();

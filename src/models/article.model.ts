@@ -59,6 +59,51 @@ const articleSchema = new Schema(
       ref: "Category",
       required: [true, "Article category is required"]
     },
+    language:{
+      type: String,
+      enum: ["en", "ta"],
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+    // Regional classification
+    region: {
+      type: String,
+      enum: ["tamil-nadu", "india", "international"],
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+    // Regional news classification
+    regionalTopic: {
+      type: String,
+      enum: [
+        "politics",
+        "government",
+        "crime",
+        "education",
+        "business",
+        "infrastructure",
+        "other",
+      ],
+      default: "other",
+      lowercase: true,
+      trim: true,
+    },
+
+    // Editorial importance score (0-100)
+    importanceScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+   // Whether the article passed editorial selection
+   isCurated: {
+   type: Boolean,
+   default: false,
+  },
 
     // Source collection
     source: {
@@ -158,6 +203,14 @@ articleSchema.index({
   status: 1,
   publishedAt: -1
 });
+// Regional news feed
+articleSchema.index({
+  region: 1,
+  status: 1,
+  isCurated: 1,
+  language: 1,
+  publishedAt: -1
+});
 // Author's article management
 articleSchema.index({
   author: 1,
@@ -169,6 +222,10 @@ articleSchema.index({
   description: "text",
   content: "text",
   tags: "text",
+},{
+  default_language: "english",
+  language_override: "textIndexLanguage",
+  name: "article_text_search_v2",
 });
 // Prevent importing the same provider article twice.
 articleSchema.index(
